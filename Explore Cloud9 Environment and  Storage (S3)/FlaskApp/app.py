@@ -15,39 +15,38 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def upload_file():
     if request.method == 'POST':
         if 'file' not in request.files:
-            flash('No file part')
+            flash('No file part', 'error')
             return redirect(request.url)
         
         file = request.files['file']
         
         if file.filename == '':
-            flash('No selected file')
+            flash('No selected file', 'error')
             return redirect(request.url)
 
-        if not allowed_file(file.filename, ALLOWED_EXTENSIONS):
-            flash('Invalid file type. Only images are allowed.')
-            return redirect(request.url)
+        if file and allowed_file(file.filename, ALLOWED_EXTENSIONS):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.root_path, filename)
+            file.save(file_path)
+            
+            # Resize the image
+            resized_file_path = os.path.join(app.root_path, 'resized_' + filename)
+            resize_image(file_path, resized_file_path)
 
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.root_path, filename)
-        file.save(file_path)
-        
-        # Resize the image
-        resized_file_path = os.path.join(app.root_path, 'resized_' + filename)
-        resize_image(file_path, resized_file_path)
-
-        # Upload to S3
-        try:
-            s3.upload_file(
-                Filename=resized_file_path,
-                Bucket=BUCKET_NAME,
-                Key=filename
-            )
-            os.remove(file_path)
-            os.remove(resized_file_path)
-            flash('File uploaded successfully', 'success')
-        except Exception as e:
-            flash(f'Error uploading file: {str(e)}', 'error')
+            # Upload to S3
+            try:
+                s3.upload_file(
+                    Filename=resized_file_path,
+                    Bucket=BUCKET_NAME,
+                    Key=filename
+                )
+                os.remove(file_path)
+                os.remove(resized_file_path)
+                flash('File uploaded successfully', 'success')
+            except Exception as e:
+                flash(f'Error uploading file: {str(e)}', 'error')
+        else:
+            flash('Invalid file type. Only images are allowed.', 'error')
 
         return redirect(request.url)
 
