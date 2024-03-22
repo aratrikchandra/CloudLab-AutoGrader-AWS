@@ -27,7 +27,14 @@ def upload_file():
             flash('No selected file', 'error')
             return redirect(request.url)
 
-        if file.content_length > MAX_IMAGE_SIZE:
+        # Generate unique filename
+        unique_filename = 'pic_' + str(uuid.uuid4()) + '.' + file.filename.rsplit('.', 1)[1].lower()
+        file_path = os.path.join(app.root_path, unique_filename)
+        file.save(file_path)
+
+        # Check the file size
+        if os.path.getsize(file_path) > MAX_IMAGE_SIZE:
+            os.remove(file_path)  # remove the file if it's too large
             flash('File size exceeds maximum allowed size (2MB)', 'error')
             return redirect(request.url)
 
@@ -35,12 +42,7 @@ def upload_file():
             flash('Invalid file type. Only images are allowed.', 'error')
             return redirect(request.url)
 
-        try:
-            # Generate unique filename
-            unique_filename = 'pic_' + str(uuid.uuid4()) + '.' + file.filename.rsplit('.', 1)[1].lower()
-            file_path = os.path.join(app.root_path, unique_filename)
-            file.save(file_path)
-            
+        try:            
             # Resize the image
             resized_file_path = os.path.join(app.root_path, 'resized_' + unique_filename)
             resize_image(file_path, resized_file_path)
