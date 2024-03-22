@@ -2,13 +2,15 @@ from flask import Flask, request, redirect, url_for, render_template, flash
 from werkzeug.utils import secure_filename
 import boto3
 import os
+import uuid  # for generating unique IDs
 from util import resize_image, allowed_file
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', '_5#y2L"F4Q8z\n\xec]/')
+app.secret_key = os.environ.get('SECRET_KEY', 'Your_Secret_Key')
 
 s3 = boto3.client('s3')
-BUCKET_NAME = os.environ.get('BUCKET_NAME', 'project-photos-lab5')
+BUCKET_NAME = os.environ.get('BUCKET_NAME', 'Your_Bucket_Name')
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 MAX_IMAGE_SIZE = 2 * 1024 * 1024  # 2 MB
 
@@ -34,19 +36,20 @@ def upload_file():
             return redirect(request.url)
 
         try:
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(app.root_path, filename)
+            # Generate unique filename
+            unique_filename = 'pic_' + str(uuid.uuid4()) + '.' + file.filename.rsplit('.', 1)[1].lower()
+            file_path = os.path.join(app.root_path, unique_filename)
             file.save(file_path)
             
             # Resize the image
-            resized_file_path = os.path.join(app.root_path, 'resized_' + filename)
+            resized_file_path = os.path.join(app.root_path, 'resized_' + unique_filename)
             resize_image(file_path, resized_file_path)
 
-            # Upload to S3
+            # Upload to S3 with the unique filename
             s3.upload_file(
                 Filename=resized_file_path,
                 Bucket=BUCKET_NAME,
-                Key=filename
+                Key=unique_filename
             )
 
             os.remove(file_path)
@@ -61,4 +64,4 @@ def upload_file():
     return render_template('upload.html', allowed_extensions=ALLOWED_EXTENSIONS, max_size_mb=MAX_IMAGE_SIZE/(1024*1024))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True,port=8080)
