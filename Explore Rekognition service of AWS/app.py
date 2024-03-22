@@ -9,6 +9,8 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'Your_Secret_Key')
 
 s3 = boto3.client('s3')
+rekognition = boto3.client('rekognition')
+
 BUCKET_NAME = os.environ.get('BUCKET_NAME', 'Your_Bucket_Name')
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -54,10 +56,22 @@ def upload_file():
                 Key=unique_filename
             )
 
+            # Use Amazon Rekognition to label the image
+            response = rekognition.detect_labels(
+                Image={
+                    'S3Object': {
+                        'Bucket': BUCKET_NAME,
+                        'Name': unique_filename
+                    }
+                },
+                MaxLabels=10
+            )
+
+            labels = [label['Name'] for label in response['Labels']]
+            flash('File uploaded successfully. Detected labels: ' + ', '.join(labels), 'success')
+
             os.remove(file_path)
             os.remove(resized_file_path)
-
-            flash('File uploaded successfully', 'success')
         except Exception as e:
             flash(f'Error uploading file: {str(e)}', 'error')
 
