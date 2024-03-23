@@ -13,6 +13,10 @@ rekognition = boto3.client('rekognition')
 
 BUCKET_NAME = os.environ.get('BUCKET_NAME', 'Your_Bucket_Name')
 
+print("SECRET_KEY:", os.environ.get('SECRET_KEY'))
+print("BUCKET_NAME:", os.environ.get('BUCKET_NAME'))
+
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 MAX_IMAGE_SIZE = 2 * 1024 * 1024  # 2 MB
 
@@ -29,6 +33,10 @@ def upload_file():
             flash('No selected file', 'error')
             return redirect(request.url)
 
+        if not allowed_file(file.filename, ALLOWED_EXTENSIONS):
+            flash('Invalid file type. Only images are allowed.', 'error')
+            return redirect(request.url)
+
         # Generate unique filename
         unique_filename = 'pic_' + str(uuid.uuid4()) + '.' + file.filename.rsplit('.', 1)[1].lower()
         file_path = os.path.join(app.root_path, unique_filename)
@@ -38,10 +46,6 @@ def upload_file():
         if os.path.getsize(file_path) > MAX_IMAGE_SIZE:
             os.remove(file_path)  # remove the file if it's too large
             flash('File size exceeds maximum allowed size (2MB)', 'error')
-            return redirect(request.url)
-
-        if not allowed_file(file.filename, ALLOWED_EXTENSIONS):
-            flash('Invalid file type. Only images are allowed.', 'error')
             return redirect(request.url)
 
         try:            
@@ -73,6 +77,8 @@ def upload_file():
             os.remove(file_path)
             os.remove(resized_file_path)
         except Exception as e:
+            os.remove(file_path)  # ensure the file is removed in case of an error
+            os.remove(resized_file_path)
             flash(f'Error uploading file: {str(e)}', 'error')
 
         return redirect(request.url)
