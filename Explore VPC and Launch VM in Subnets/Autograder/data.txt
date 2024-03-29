@@ -1,0 +1,5 @@
+{
+    "public_ip": "<Public IP of Public VM>",
+    "private_ip_public_vm": "<Private IP of Public VM>",,
+    "private_ip_private_vm": "<Private IP of Private VM>",
+}
