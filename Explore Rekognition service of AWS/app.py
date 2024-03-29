@@ -13,10 +13,6 @@ rekognition = boto3.client('rekognition')
 
 BUCKET_NAME = os.environ.get('BUCKET_NAME', 'Your_Bucket_Name')
 
-print("SECRET_KEY:", os.environ.get('SECRET_KEY'))
-print("BUCKET_NAME:", os.environ.get('BUCKET_NAME'))
-
-
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 MAX_IMAGE_SIZE = 2 * 1024 * 1024  # 2 MB
 
@@ -48,7 +44,7 @@ def upload_file():
             flash('File size exceeds maximum allowed size (2MB)', 'error')
             return redirect(request.url)
 
-        try:            
+        try:
             # Resize the image
             resized_file_path = os.path.join(app.root_path, 'resized_' + unique_filename)
             resize_image(file_path, resized_file_path)
@@ -72,7 +68,7 @@ def upload_file():
             )
 
             labels = [label['Name'] for label in response['Labels']]
-            flash('File uploaded successfully. Detected labels: ' + ', '.join(labels), 'success')
+            flash(f'File uploaded successfully. Detected labels: {", ".join(labels)}. Image ID: {unique_filename}', 'success')
 
             os.remove(file_path)
             os.remove(resized_file_path)
@@ -86,4 +82,4 @@ def upload_file():
     return render_template('upload.html', allowed_extensions=ALLOWED_EXTENSIONS, max_size_mb=MAX_IMAGE_SIZE/(1024*1024))
 
 if __name__ == '__main__':
-    app.run(debug=True,port=8080)
+    app.run(host='0.0.0.0', port=8080, debug=True)
