@@ -68,12 +68,14 @@ def check_application():
     try:
         # Place your test images and files in the correct paths before running this script
         # Test 1: Valid image upload
-        files = {'file': ('valid_image.jpg', open('test_images/valid_image.jpg', 'rb'), 'image/jpeg')}
-        response = requests.post(url, files=files)
-        flash_messages, image_id = parse_flash_messages(response.content)
-        total_score += grade_tests(flash_messages, ["File uploaded successfully"], 1)
-        if image_id:
-            append_image_id(image_id)
+        valid_image_files = ['valid_image.jpg', 'valid_image1.jpg', 'valid_image2.jpg']
+        for image_file in valid_image_files:
+            files = {'file': (image_file, open(f'test_images/{image_file}', 'rb'), 'image/jpeg')}
+            response = requests.post(url, files=files)
+            flash_messages, image_id = parse_flash_messages(response.content)
+            total_score += grade_tests(flash_messages, ["File uploaded successfully"], 1)
+            if image_id:
+                append_image_id(image_id)
 
         # Test 2: Large Image Upload
         files = {'file': ('large.jpg', open('test_images/large.jpg', 'rb'), 'image/jpeg')}
@@ -92,7 +94,7 @@ def check_application():
         flash_messages, _ = parse_flash_messages(response.content)
         total_score += grade_tests(flash_messages, ["No file part","No selected file"], 4)
 
-        print("Total Score:", total_score, "/ 100")
+        print("Total Score:", total_score)
     except Exception as e:
         print(f"An error occurred while testing: {e}")
 
