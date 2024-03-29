@@ -1,0 +1,7 @@
+{
+    "public_ip": "PUBLIC_IP_OF_THE_APPLICATION",
+    "port": "PORT_NUMBER",
+    "INSTRUCTOR Access key ID" : "ACCESS_KEY_ID",
+    "INSTRUCTOR Secret Acess Key" : "SECRET_ACCESS_KEY",
+    "s3 bucket name" : "YOUR_BUECKET"
+}
