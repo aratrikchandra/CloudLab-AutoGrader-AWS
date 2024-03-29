@@ -27,6 +27,10 @@ def upload_file():
             flash('No selected file', 'error')
             return redirect(request.url)
 
+        if not allowed_file(file.filename, ALLOWED_EXTENSIONS):
+            flash('Invalid file type. Only images are allowed.', 'error')
+            return redirect(request.url)
+
         # Generate unique filename
         unique_filename = 'pic_' + str(uuid.uuid4()) + '.' + file.filename.rsplit('.', 1)[1].lower()
         file_path = os.path.join(app.root_path, unique_filename)
@@ -38,11 +42,7 @@ def upload_file():
             flash('File size exceeds maximum allowed size (2MB)', 'error')
             return redirect(request.url)
 
-        if not allowed_file(file.filename, ALLOWED_EXTENSIONS):
-            flash('Invalid file type. Only images are allowed.', 'error')
-            return redirect(request.url)
-
-        try:            
+        try:
             # Resize the image
             resized_file_path = os.path.join(app.root_path, 'resized_' + unique_filename)
             resize_image(file_path, resized_file_path)
@@ -54,11 +54,13 @@ def upload_file():
                 Key=unique_filename
             )
 
+            flash(f'File uploaded successfully.Image ID: {unique_filename}', 'success')
+
             os.remove(file_path)
             os.remove(resized_file_path)
-
-            flash('File uploaded successfully', 'success')
         except Exception as e:
+            os.remove(file_path)  # ensure the file is removed in case of an error
+            os.remove(resized_file_path)
             flash(f'Error uploading file: {str(e)}', 'error')
 
         return redirect(request.url)
@@ -66,4 +68,4 @@ def upload_file():
     return render_template('upload.html', allowed_extensions=ALLOWED_EXTENSIONS, max_size_mb=MAX_IMAGE_SIZE/(1024*1024))
 
 if __name__ == '__main__':
-    app.run(debug=True,port=8080)
+    app.run(host='0.0.0.0', port=8080, debug=True)
