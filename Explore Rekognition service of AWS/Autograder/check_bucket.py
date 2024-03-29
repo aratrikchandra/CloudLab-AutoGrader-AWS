@@ -1,6 +1,9 @@
 import boto3
 import json
 
+# Initialize the score
+score = 0
+
 # Load the data.json file
 try:
     with open('data.json') as f:
@@ -56,12 +59,18 @@ def check_object_exists(bucket_name, object_name):
 # Check if the bucket exists
 if check_bucket_exists(bucket_name):
     print(f'Bucket {bucket_name} exists.')
+    score += 25
 else:
     print(f'Bucket {bucket_name} does not exist.')
+    print(f'Total score: {score}')
+    exit(1)
 
 # Check if the images exist in the bucket
 for image in uploaded_images:
     if check_object_exists(bucket_name, image):
         print(f'Image {image} exists in the bucket.')
+        score += 25
     else:
         print(f'Image {image} does not exist in the bucket.')
+
+print(f'Total score: {score}')
