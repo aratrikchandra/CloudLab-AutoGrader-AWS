@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Labels</title>
+</head>
+<body>
+    <h1>Image Labels</h1>
+    {% if data %}
+        <p><strong>Image:</strong> {{ data['Image'] }}</p>
+        <p><strong>Labels:</strong> {{ data['Labels']|join(", ") }}</p>
+    {% else %}
+        <p>No data available.</p>
+    {% endif %}
+</body>
+</html>

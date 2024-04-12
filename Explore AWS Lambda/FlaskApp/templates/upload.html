@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+    <title>Photo Upload Application</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Photo Upload Application</h1>
+        <p>Allowed image extensions: {{ allowed_extensions | join(", ") }}</p>
+        <p>Maximum image size: {{ max_size_mb }} MB</p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form method="post" enctype="multipart/form-data">
+            <input type="file" name="file">
+            <input type="submit" value="Upload">
+        </form>
+        <form action="/check_labels" method="post">
+            <input type="submit" value="Check Labels">
+        </form>
+        <p>Your image will be processed asynchronously. Labels will be generated and stored separately.</p>
+    </div>
+</body>
+</html>
