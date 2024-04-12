@@ -14,6 +14,9 @@ s3 = boto3.client('s3')
 BUCKET_NAME = os.environ.get('BUCKET_NAME', 'Your_Bucket_Name')
 LABELS_BUCKET = os.environ.get('LABELS_BUCKET', 'Your_Labels_Bucket_Name')
 
+# print("The photo storage bucket name is: "+BUCKET_NAME)
+# print("The labels storage bucket name is: "+LABELS_BUCKET)
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 MAX_IMAGE_SIZE = 2 * 1024 * 1024  # 2 MB
 
@@ -80,25 +83,33 @@ def upload_file():
 def check_labels():
     uploaded_image = session.get('uploaded_image')
     if uploaded_image:
-        labels = retrieve_labels(uploaded_image)
-        if labels:
-            return render_template('labels.html', image_name=uploaded_image, labels=labels)
+        data = retrieve_labels(uploaded_image)
+        if data:
+            response = render_template('labels.html', data=data, uploaded_image=uploaded_image)
+            # Clear the session variable after use
+            session.pop('uploaded_image', None)
+            return response
         else:
             flash('Labels not available for the uploaded image.', 'error')
+            # Clear the session variable if no labels found
+            session.pop('uploaded_image', None)
             return redirect(url_for('upload_file'))
     else:
         flash('Please upload a photo before checking labels.', 'error')
         return redirect(url_for('upload_file'))
 
+
+
 def retrieve_labels(image_name):
     # Retrieve labels for the given image name from the labels bucket
     try:
         response = s3.get_object(Bucket=LABELS_BUCKET, Key=f'labels/{image_name}.json')
-        labels = json.loads(response['Body'].read())
-        return labels
+        data = json.loads(response['Body'].read())
+        return data  # Return the entire data structure
     except Exception as e:
         print(f'Error retrieving labels for {image_name}: {str(e)}')
-        return []
+        return None
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
