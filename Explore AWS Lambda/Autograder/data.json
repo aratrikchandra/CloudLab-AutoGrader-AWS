@@ -1,0 +1,4 @@
+{
+    "public_ip": "<Your Application Public IP>",
+    "port" : "<Your Application Port>"
+}
