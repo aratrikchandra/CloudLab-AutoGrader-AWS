@@ -1,4 +1,10 @@
 {
     "public_ip": "<Your Application Public IP>",
-    "port" : "<Your Application Port>"
+    "port" : "<Your Application Port>",
+    "INSTRUCTOR Access key ID" : "<Instructor Access Key ID>",
+    "INSTRUCTOR Secret Acess Key" : "<Instructor Secret Acess Key>",
+    "source s3 bucket name" : "<Your Photos Bucket Name>", 
+    "Lambda Function Name" : "<Your Lambda Function Name>",
+    "labels s3 bucket name" : "<Your Labels Bucket Name>",
+    "region" : "<Your Region>"
 }
