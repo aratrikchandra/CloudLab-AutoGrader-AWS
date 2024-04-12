@@ -3,6 +3,7 @@ from werkzeug.utils import secure_filename
 import boto3
 import os
 import uuid  # for generating unique IDs
+import json
 from util import resize_image, allowed_file
 
 app = Flask(__name__)
@@ -11,6 +12,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'Your_Secret_Key')
 s3 = boto3.client('s3')
 
 BUCKET_NAME = os.environ.get('BUCKET_NAME', 'Your_Bucket_Name')
+LABELS_BUCKET = os.environ.get('LABELS_BUCKET', 'Your_Labels_Bucket_Name')
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 MAX_IMAGE_SIZE = 2 * 1024 * 1024  # 2 MB
@@ -73,6 +75,30 @@ def upload_file():
         return redirect(request.url)
 
     return render_template('upload.html', allowed_extensions=ALLOWED_EXTENSIONS, max_size_mb=MAX_IMAGE_SIZE/(1024*1024))
+
+@app.route('/check_labels', methods=['POST'])
+def check_labels():
+    uploaded_image = session.get('uploaded_image')
+    if uploaded_image:
+        labels = retrieve_labels(uploaded_image)
+        if labels:
+            return render_template('labels.html', image_name=uploaded_image, labels=labels)
+        else:
+            flash('Labels not available for the uploaded image.', 'error')
+            return redirect(url_for('upload_file'))
+    else:
+        flash('Please upload a photo before checking labels.', 'error')
+        return redirect(url_for('upload_file'))
+
+def retrieve_labels(image_name):
+    # Retrieve labels for the given image name from the labels bucket
+    try:
+        response = s3.get_object(Bucket=LABELS_BUCKET, Key=f'labels/{image_name}.json')
+        labels = json.loads(response['Body'].read())
+        return labels
+    except Exception as e:
+        print(f'Error retrieving labels for {image_name}: {str(e)}')
+        return []
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
