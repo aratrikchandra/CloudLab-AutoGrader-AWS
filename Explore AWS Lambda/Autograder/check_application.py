@@ -1,6 +1,7 @@
 import requests
 import time
 import json
+import os
 from bs4 import BeautifulSoup
 
 def upload_image(public_ip, port, image_path, session):
@@ -38,7 +39,8 @@ def main():
     public_ip = data['public_ip']
     port = data['port']
 
-    images = ['image1.jpg', 'image2.jpg', 'image3.jpg']
+    image_folder = 'test_images'  # specify the folder containing your images
+    images = [os.path.join(image_folder, image) for image in os.listdir(image_folder)]
     fetch_data = {}
 
     with requests.Session() as session:
@@ -46,7 +48,7 @@ def main():
             response = upload_image(public_ip, port, image_path, session)
             response_text = response.text
             if 'File uploaded successfully. Please wait a few moments for processing.' not in response_text:
-                print("Successful Upload message not seen i.e upload failed")
+                print(f"Successful Upload message not seen i.e upload failed for the file '{image_path}")
                 continue
 
             time.sleep(2)  # Wait for label generation
@@ -58,7 +60,7 @@ def main():
                     image_name, labels = parsed_labels
                     fetch_data[image_name] = labels
                 else:
-                    print("Error or no labels found for the image.")
+                    print(f"Error or no labels found for the image {image_name}")
                     continue
             else:
                 # Check for flash message
