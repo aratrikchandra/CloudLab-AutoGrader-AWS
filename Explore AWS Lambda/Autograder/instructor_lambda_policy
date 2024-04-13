@@ -7,7 +7,9 @@
             "Action": [
                 "logs:FilterLogEvents",
                 "logs:GetLogEvents",
-                "logs:DescribeLogStreams"
+                "logs:DescribeLogStreams",
+                "s3:ListBucket",
+                "s3:GetObject"
             ],
             "Resource": "*"
         }
