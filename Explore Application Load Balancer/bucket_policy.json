@@ -1,0 +1,23 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowPutObject",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::elb-account-id:root"
+            },
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::<Your Bucket Name>/AWSLogs/aws-account-id/*"
+        },
+        {
+            "Sid": "AllowGetObject",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::elb-account-id:root"
+            },
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::<Your Bucket Name>/AWSLogs/aws-account-id/*"
+        }
+    ]
+}
