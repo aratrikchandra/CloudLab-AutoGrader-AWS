@@ -8,16 +8,31 @@
                 "AWS": "arn:aws:iam::elb-account-id:root"
             },
             "Action": "s3:PutObject",
-            "Resource": "arn:aws:s3:::<Your Bucket Name>/AWSLogs/aws-account-id/*"
+            "Resource": "arn:aws:s3:::<Your Bucket Name>/AWSLogs/<your-iam-account-id>/*"
         },
         {
             "Sid": "AllowGetObject",
             "Effect": "Allow",
             "Principal": {
-                "AWS": "arn:aws:iam::elb-account-id:root"
+                "AWS": [
+                    "arn:aws:iam::<your-iam-account-id>:user/<instructor-iam-user-name>",
+                    "arn:aws:iam::elb-account-id:root"
+                ]
             },
             "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::<Your Bucket Name>/AWSLogs/aws-account-id/*"
+            "Resource": "arn:aws:s3:::<Your Bucket Name>/AWSLogs/<your-iam-account-id>/*"
+        },
+        {
+            "Sid": "AllowListBucket",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::<your-iam-account-id>:user/<instructor-iam-user-name>",
+                    "arn:aws:iam::elb-account-id:root"
+                ]
+            },
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::<Your Bucket Name>"
         }
     ]
 }
