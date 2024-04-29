@@ -1,0 +1,14 @@
+{
+    "INSTRUCTOR Access key ID": "",
+    "INSTRUCTOR Secret Access Key": "",
+    "s3 bucket name": "",
+    "region": "",
+    "account-id": "",
+    "DNS_name_of_ALB": "",
+    "alb-name": "",
+    "foo-target-group": "",
+    "bar-target-group": "",
+    "client-ip": "",
+    "foo-instance-private-ip": "",
+    "bar-instance-private-ip": ""
+}
