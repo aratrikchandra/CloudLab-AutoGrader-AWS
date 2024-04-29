@@ -11,7 +11,7 @@ def verify_log_entry(log_entry, data, log):
         # Check if any key value in log_entry is empty
         for key, value in log_entry.items():
             if not value:
-                print(f"Value for {key} in log entry is empty.")
+                # print(f"Value for {key} in log entry is empty.")
                 return
 
         # Check if the client IP, client port, and ALB name match the content of data.json

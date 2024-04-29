@@ -22,8 +22,9 @@ except FileNotFoundError:
 data['client-ip'] = client_ip
 
 # Define the IP address ranges for the instances
-foo_ip_range = ip_network('10.1.0.0/16')
-bar_ip_range = ip_network('10.2.0.0/16')
+foo_ip_range = ip_network('10.1.1.0/16', strict=False)
+bar_ip_range = ip_network('10.1.2.0/16', strict=False)
+
 
 # Send requests to the /foo and /bar routes
 try:
@@ -38,17 +39,35 @@ if foo_response and bar_response:
     foo_soup = BeautifulSoup(foo_response.text, 'html.parser')
     bar_soup = BeautifulSoup(bar_response.text, 'html.parser')
 
-    foo_ip = ip_address(foo_soup.find('p', text=lambda t: t and 'IP Address:' in t).split(': ')[1])
-    bar_ip = ip_address(bar_soup.find('p', text=lambda t: t and 'IP Address:' in t).split(': ')[1])
+    foo_strong = foo_soup.find('strong', string='IP Address:')
+    # print(foo_strong)
+    bar_strong = bar_soup.find('strong', string='IP Address:')
 
-    # Check if the private IP addresses are in the correct ranges
-    if foo_ip in foo_ip_range and bar_ip in bar_ip_range:
-        print('The student has correctly set up the instances and the ALB.')
-        # Store the private IP addresses in the data.json file
-        data['foo-instance-private-ip'] = str(foo_ip)
-        data['bar-instance-private-ip'] = str(bar_ip)
+    if foo_strong and bar_strong:
+        foo_ip_text = foo_strong.next_sibling.strip()
+        # print(foo_ip_text)
+        bar_ip_text = bar_strong.next_sibling.strip()
+
+        if foo_ip_text and bar_ip_text:
+            foo_ip = ip_address(foo_ip_text)
+            #print(type(foo_ip))
+            bar_ip = ip_address(bar_ip_text)
+
+            # Check if the private IP addresses are in the correct ranges
+            if foo_ip in foo_ip_range and bar_ip in bar_ip_range:
+                print('The student has correctly set up the instances and the ALB.')
+                # Store the private IP addresses in the data.json file
+                data['foo-instance-private-ip'] = str(foo_ip)
+                data['bar-instance-private-ip'] = str(bar_ip)
+            else:
+                print('The instances or the ALB are not correctly set up.')
+        else:
+            print('Could not find IP addresses in the responses.')
     else:
-        print('The instances or the ALB are not correctly set up.')
+        print('Could not find the expected text in the responses.')
+
+
+
 
 # Save the data back to data.json
 try:

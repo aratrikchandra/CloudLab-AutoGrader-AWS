@@ -7,20 +7,46 @@ from multiprocessing import Process
 import os
 
 def fetch_logs(access_key_id, secret_access_key, region, bucket_name, prefix, client_ip):
-    # Create a session using your credentials
-    session = boto3.Session(
-        aws_access_key_id=access_key_id,
-        aws_secret_access_key=secret_access_key,
-        region_name=region
-    )
+    try:
+        # Create a session using your credentials
+        session = boto3.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region
+        )
+    except Exception as e:
+        print(f"Error creating session: {e}")
+        return
 
-    # Create an S3 client object using the session
-    s3_client = session.client('s3')
+    try:
+        # Create an S3 client object using the session
+        s3_client = session.client('s3')
+    except Exception as e:
+        print(f"Error creating S3 client: {e}")
+        return
+
+    # Check if the bucket exists
+    try:
+        s3_client.head_bucket(Bucket=bucket_name)
+    except Exception as e:
+        print(f"Bucket does not exist or you do not have access: {e}")
+        return
 
     # Get the .log.gz files
     paginator = s3_client.get_paginator('list_objects_v2')
 
-    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
+    try:
+        pages = paginator.paginate(Bucket=bucket_name, Prefix=prefix)
+    except Exception as e:
+        print(f"Error paginating bucket: {e}")
+        return
+
+    for page in pages:
+        # Check if the prefix is valid
+        if not page['Contents']:
+            print(f"No objects found with prefix '{prefix}'")
+            return
+
         for obj in page['Contents']:
             if obj['Key'].endswith('.log.gz'):
                 try:
@@ -48,8 +74,6 @@ def fetch_logs(access_key_id, secret_access_key, region, bucket_name, prefix, cl
                                 f_out.write(log_data)
                 except Exception as e:
                     print(f"Error writing to 'access.log': {e}")
-
-    time.sleep(200)
 
 def main():
     # Delete temp.log, access.log, and temp.log.gz if they exist
