@@ -4,14 +4,29 @@
         {
             "Sid": "ListObjectsInBucket",
             "Effect": "Allow",
-            "Action": ["s3:ListBucket"],
-            "Resource": ["arn:aws:s3:::project-photos-lab5"]
+            "Action": [
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::project-photos-lab5"
+            ]
         },
         {
             "Sid": "AllObjectActions",
             "Effect": "Allow",
             "Action": "s3:GetObject",
-            "Resource": ["arn:aws:s3:::project-photos-lab5/*"]
+            "Resource": [
+                "arn:aws:s3:::project-photos-lab5/*"
+            ]
+        },
+        {
+            "Sid": "CloudTrailAccess",
+            "Effect": "Allow",
+            "Action": [
+                "cloudtrail:DescribeTrails",
+                "cloudtrail:LookupEvents"
+            ],
+            "Resource": "*"
         }
     ]
 }
