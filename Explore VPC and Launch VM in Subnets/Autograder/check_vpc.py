@@ -8,7 +8,7 @@ def check_vpc_and_subnets(region, access_key, secret_key):
         if vpc.tags is None:
             continue
         for tag in vpc.tags:
-            if 'Name' in tag['Key'] and tag['Value'] == 'aws-vpc':
+            if 'Name' in tag['Key'] and tag['Value'] == data['Vpc Name']:
                 if vpc.cidr_block == '10.1.0.0/16':
                     print(f"VPC {vpc.id} with name {tag['Value']} and CIDR block {vpc.cidr_block} is created correctly.")
                 else:
@@ -40,7 +40,7 @@ def check_vpc_and_subnets(region, access_key, secret_key):
                                     print(f"Private subnet {subnet.id} with name {tag['Value']} is not correctly configured.")
 
 # Load data from file
-with open('iam.txt', 'r') as f:
+with open('data.json', 'r') as f:
     data = json.load(f)
 
-check_vpc_and_subnets(data['region_name'], data['aws_access_key_id'], data['aws_secret_access_key'])
+check_vpc_and_subnets(data['Region'], data['INSTRUCTOR Access key ID'], data['INSTRUCTOR Secret Access Key'])
