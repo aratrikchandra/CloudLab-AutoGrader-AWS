@@ -4,8 +4,22 @@ import json
 
 def read_app_config():
     try:
-        with open('data.json', 'r') as file:
+        with open('data.json', 'r+') as file:
             data = json.load(file)
+                    # Get the client's public IP
+            try:
+                client_ip = requests.get('https://api.ipify.org').text
+            except requests.exceptions.RequestException as e:
+                print(f"Error occurred while getting client's public IP: {str(e)}")
+                client_ip = None
+
+            if "client_ip" not in data:
+                data["client_ip"] = ""
+            data['client_ip']=client_ip
+            file.seek(0)
+            json.dump(data, file, indent=4)
+            file.truncate()
+
             url = f"http://{data['public_ip']}:{data['port']}/"
             # Check if the URL is accessible
             response = requests.get(url)
@@ -36,24 +50,27 @@ def parse_flash_messages(html_content):
             image_id = message[id_start:]
     return flash_messages, image_id
 
-def append_image_id(new_image_id):
+
+def insert_image_id(new_image_id):
     try:
         with open('data.json', 'r+') as file:
             data = json.load(file)
-            if "uploaded_images" not in data:
-                data["uploaded_images"] = []
-            data["uploaded_images"].append(new_image_id)
+            if "Uploaded Image Name" not in data:
+                data["Uploaded Image Name"] = ""
+            data["Uploaded Image Name"]=new_image_id
             file.seek(0)
             json.dump(data, file, indent=4)
             file.truncate()
+
     except Exception as e:
-        print(f"Failed to append image ID to 'data.json': {e}")
+        print(f"Failed to insert image ID to 'data.json': {e}")
+
 
 def grade_tests(flash_messages, expected_conditions, test_case_number):
     score = 0
     print(f"Test Case {test_case_number}:")
     for condition in expected_conditions:
-        if any(condition in message for message in flash_messages):
+        if all(condition in message for message in flash_messages):
             print("   Success:", flash_messages)
             score = 25
             break
@@ -68,33 +85,13 @@ def check_application():
     try:
         # Place your test images and files in the correct paths before running this script
         # Test 1: Valid image upload
-        valid_image_files = ['valid_image.jpg', 'valid_image1.jpg', 'valid_image2.jpg']
-        for image_file in valid_image_files:
-            files = {'file': (image_file, open(f'test_images/{image_file}', 'rb'), 'image/jpeg')}
-            response = requests.post(url, files=files)
-            flash_messages, image_id = parse_flash_messages(response.content)
-            total_score += grade_tests(flash_messages, ["File uploaded successfully"], 1)
-            if image_id:
-                append_image_id(image_id)
-
-        # Test 2: Large Image Upload
-        files = {'file': ('large.jpg', open('test_images/large.jpg', 'rb'), 'image/jpeg')}
+        files = {'file': ('valid_image.jpg', open(f'test_images/valid_image.jpg', 'rb'), 'image/jpeg')}
         response = requests.post(url, files=files)
-        flash_messages, _ = parse_flash_messages(response.content)
-        total_score += grade_tests(flash_messages, ["File size exceeds maximum allowed size"], 2)
+        flash_messages, image_id = parse_flash_messages(response.content)
+        total_score += grade_tests(flash_messages, ["Detected labels:"], 1)
+        if image_id:
+            insert_image_id(image_id)
 
-        # Test 3: Invalid File Type
-        files = {'file': ('invalid_image.pdf', open('test_images/invalid_image.pdf', 'rb'), 'application/pdf')}
-        response = requests.post(url, files=files)
-        flash_messages, _ = parse_flash_messages(response.content)
-        total_score += grade_tests(flash_messages, ["Invalid file type"], 3)
-
-        # Test 4: Empty File Submission
-        response = requests.post(url, files={'file': ('', '', 'application/octet-stream')})
-        flash_messages, _ = parse_flash_messages(response.content)
-        total_score += grade_tests(flash_messages, ["No file part","No selected file"], 4)
-
-        print("Total Score:", total_score)
     except Exception as e:
         print(f"An error occurred while testing: {e}")
 
