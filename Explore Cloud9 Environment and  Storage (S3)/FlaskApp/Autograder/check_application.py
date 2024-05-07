@@ -1,46 +1,102 @@
 import requests
 from bs4 import BeautifulSoup
+import json
 
-# Function to parse flash messages from HTML content
+def read_app_config():
+    try:
+        with open('data.json', 'r') as file:
+            data = json.load(file)
+            url = f"http://{data['public_ip']}:{data['port']}/"
+            # Check if the URL is accessible
+            response = requests.get(url)
+            if response.status_code == 200:
+                return url
+            else:
+                print(f"Error: Failed to connect to the application at {url}. Status code: {response.status_code}")
+                exit()
+    except FileNotFoundError:
+        print("Error: 'data.json' file not found.")
+        exit()
+    except json.JSONDecodeError:
+        print("Error: 'data.json' is not a valid JSON file.")
+        exit()
+    except Exception as e:
+        print(f"Error occurred while checking connection: {e}")
+        exit()
+
 def parse_flash_messages(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
     flash_messages = []
+    image_id = None
     for div in soup.find_all('div', class_='alert'):
-        flash_messages.append(div.text.strip())
-    return flash_messages
+        message = div.text.strip()
+        flash_messages.append(message)
+        if "File uploaded successfully." in message:
+            id_start = message.find("Image ID: ") + len("Image ID: ")
+            image_id = message[id_start:]
+    return flash_messages, image_id
 
-# Function to check if the application is publicly accessible and working properly
-def check_application(url):
+def insert_image_id(new_image_id):
     try:
-        # Test 1: Image file size less than 2MB
-        files = {'file': open('test_images/valid_image.jpg', 'rb')}
-        response = requests.post(url, files=files)
-        flash_messages = parse_flash_messages(response.content)
-        print("Test 1 (Image size < 2MB):", response.status_code)
-        print("   Flash messages:", flash_messages)
+        with open('data.json', 'r+') as file:
+            data = json.load(file)
+            if "Uploaded Image Name" not in data:
+                data["Uploaded Image Name"] = ""
+            data["Uploaded Image Name"]=new_image_id
+            file.seek(0)
+            json.dump(data, file, indent=4)
+            file.truncate()
 
-        # Test 2: Image file size greater than 2MB
-        files = {'file': open('test_images/large.jpg', 'rb')}
-        response = requests.post(url, files=files)
-        flash_messages = parse_flash_messages(response.content)
-        print("Test 2 (Image size > 2MB):", response.status_code)
-        print("   Flash messages:", flash_messages)
-
-        # Test 3: Not an image file
-        files = {'file': open('test_images/invalid_image.pdf', 'rb')}
-        response = requests.post(url, files=files)
-        flash_messages = parse_flash_messages(response.content)
-        print("Test 3 (Not an image file):", response.status_code)
-        print("   Flash messages:", flash_messages)
-
-        # Test 4: Empty file submission
-        response = requests.post(url)
-        flash_messages = parse_flash_messages(response.content)
-        print("Test 4 (Empty file submission):", response.status_code)
-        print("   Flash messages:", flash_messages)
     except Exception as e:
-        print("An error occurred:", str(e))
+        print(f"Failed to insert image ID to 'data.json': {e}")
+
+def grade_tests(flash_messages, expected_conditions, test_case_number):
+    score = 0
+    print(f"Test Case {test_case_number}:")
+    for condition in expected_conditions:
+        if any(condition in message for message in flash_messages):
+            print("   Success:", flash_messages)
+            score = 25
+            break
+    else:
+        print("   Failure:", flash_messages)
+    return score
+
+def check_application():
+    url = read_app_config()
+    total_score = 0
+
+    try:
+        # Place your test images and files in the correct paths before running this script
+        # Test 1: Valid image upload
+        files = {'file': ('valid_image.jpg', open(f'test_images/valid_image.jpg', 'rb'), 'image/jpeg')}
+        response = requests.post(url, files=files)
+        flash_messages, image_id = parse_flash_messages(response.content)
+        total_score += grade_tests(flash_messages, ["File uploaded successfully"], 1)
+        if image_id:
+            insert_image_id(image_id)
+
+
+        # Test 2: Large Image Upload
+        files = {'file': ('large.jpg', open('test_images/large.jpg', 'rb'), 'image/jpeg')}
+        response = requests.post(url, files=files)
+        flash_messages, _ = parse_flash_messages(response.content)
+        total_score += grade_tests(flash_messages, ["File size exceeds maximum allowed size"], 2)
+
+        # Test 3: Invalid File Type
+        files = {'file': ('invalid_image.pdf', open('test_images/invalid_image.pdf', 'rb'), 'application/pdf')}
+        response = requests.post(url, files=files)
+        flash_messages, _ = parse_flash_messages(response.content)
+        total_score += grade_tests(flash_messages, ["Invalid file type"], 3)
+
+        # Test 4: Empty File Submission
+        response = requests.post(url, files={'file': ('', '', 'application/octet-stream')})
+        flash_messages, _ = parse_flash_messages(response.content)
+        total_score += grade_tests(flash_messages, ["No file part","No selected file"], 4)
+
+        print("Total Score:", total_score)
+    except Exception as e:
+        print(f"An error occurred while testing: {e}")
 
 if __name__ == "__main__":
-    # Replace 'http://<public_ip>:<port>/' with your Flask application URL
-    check_application('http://54.227.184.72:8080/')
+    check_application()
